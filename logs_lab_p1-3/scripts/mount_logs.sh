@@ -1,8 +1,8 @@
-#!/bin/bash
+s#!/bin/bash
 
 
 MOUNT_POINT="/LOGS"
-DISK_IMAGE="/disk_for_logs.img"
+DISK_IMAGE="/logs_disk.img"
 
 if ! mountpoint -q "$MOUNT_POINT"; then
     echo "Раздел $MOUNT_POINT не смонтирован. Пытаемся смонтировать..."
