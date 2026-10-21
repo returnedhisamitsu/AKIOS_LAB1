@@ -13,7 +13,7 @@ chmod +x "$PROJECT_DIR"/tests/*.sh
 
 echo "2. Копируем скрипты в /usr/local/bin/ (чтобы systemd их видел)..."
 cp "$PROJECT_DIR/scripts/mount_logs.sh" /usr/local/bin/
-cp "$PROJECT_DIR/scripts/log_cleaner.sh" /usr/local/bin/
+cp "$PROJECT_DIR/scripts/log_cleanup.sh" /usr/local/bin/
 
 echo "3. Копируем systemd-файлы в систему..."
 cp "$PROJECT_DIR/systemd/"*.service /etc/systemd/system/
