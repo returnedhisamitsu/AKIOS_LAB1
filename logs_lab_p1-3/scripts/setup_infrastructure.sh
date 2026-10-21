@@ -28,7 +28,7 @@ mkdir -p "$MOUNT_DIR/auth_service" "$MOUNT_DIR/data_process_service" "$MOUNT_DIR
 
 echo "5. Прописываем в /etc/fstab для автозагрузки..."
 if ! grep -q "$IMAGE_FILE" /etc/fstab; then
-    echo "$IMAGE_FILE $MOUNT_DIR ext4 loop,defaults 0 0" » /etc/fstab
+    echo "$IMAGE_FILE $MOUNT_DIR ext4 loop,defaults 0 0" >> /etc/fstab
 fi
 
 echo "6. Монтируем..."
