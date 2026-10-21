@@ -3,4 +3,4 @@ Description=Run log cleaner to prevent /LOGS overflow
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/log_cleaner.sh
+ExecStart=/usr/local/bin/log_cleanup.sh
