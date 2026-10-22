@@ -25,11 +25,17 @@ systemctl daemon-reload
 
 systemctl enable mount-logs.service
 
+echo "5. Разворачиваем диск (создаем образ и настраиваем fstab)..."
 
+if ! "$PROJECT_DIR/scripts/setup_infrastructure.sh"; then
+    echo "Ошибка: не удалось подготовить файловую систему"
+    exit 1
+fi
+
+echo "6. Включаем таймер очистки..."
 systemctl enable --now log-cleanup.timer
 
-echo "5. Разворачиваем диск (создаем образ и настраиваем fstab)..."
-"$PROJECT_DIR/scripts/setup_infrastructure.sh"
+
 
 echo "========================================="
 echo "УСТАНОВКА ЗАВЕРШЕНА УСПЕШНО!"
