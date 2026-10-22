@@ -4,10 +4,25 @@ LOG_ROOT="${LOG_ROOT:-/LOGS}"
 ARCHIVE_ROOT="${ARCHIVE_ROOT:-/LOGS_ARCHIVE}"
 THRESHOLD="${THRESHOLD:-90}"
 
-USAGE=$(df -P "$LOG_ROOT" | awk 'NR==2 {print $5}')
+if ! mountpoint -q "$LOG_ROOT"; then
+    echo "Ошибка: $LOG_ROOT не смонтирован"
+    exit 1
+fi
+
+if ! [[ "$THRESHOLD" =~ ^(100|[1-9][0-9]?)$ ]]; then
+    echo "Ошибка: THRESHOLD должен быть числом от 1 до 100"
+    exit 1
+fi
+
+if ! DF_OUTPUT=$(df -P -B1 "$LOG_ROOT"); then
+    echo "Ошибка: не удалось получить информацию о разделе $LOG_ROOT"
+    exit 1
+fi
+
+USAGE=$(printf '%s\n' "$DF_OUTPUT" | awk 'NR==2 {print $5}')
 USAGE="${USAGE%\%}"
 
-TOTAL_SIZE=$(df -P -B1 "$LOG_ROOT" | awk 'NR==2 {print $2}')
+TOTAL_SIZE=$(printf '%s\n' "$DF_OUTPUT" | awk 'NR==2 {print $2}')
 MAX_FOLDER_SIZE=$((TOTAL_SIZE / 3))
 
 echo "Заполненность раздела: $USAGE%"
@@ -19,13 +34,18 @@ SERVICES=(
     "system_event_handler_service"
 )
 
-if ((USAGE > THRESHOLD)); then
+if (( USAGE > THRESHOLD )); then
     echo "Порог превышен, проверяем папки"
     
     for service in "${SERVICES[@]}"; do 
         echo "Проверяем: $service"
 
-        FOLDER_SIZE=$(du -s -B1 "$LOG_ROOT/$service" | awk '{print $1}')
+        if ! DU_OUTPUT=$(du -s -B1 "$LOG_ROOT/$service"); then
+            echo "Ошибка: не удалось определить размер папки $service"
+            exit 1
+        fi
+
+        FOLDER_SIZE=$(printf '%s\n' "$DU_OUTPUT" | awk '{print $1}')
 
         if ((FOLDER_SIZE > MAX_FOLDER_SIZE)); then
 
@@ -38,6 +58,13 @@ if ((USAGE > THRESHOLD)); then
                 FILENAME="${FILE##*/}"
                 NAME="${FILENAME%.log}"
                 TIMESTAMP="${NAME##*_}"
+
+                if ! [[ "$TIMESTAMP" =~ ^[0-9]+$ ]]; then
+
+                    echo "Пропускаем файл с некорректным timestamp: $FILENAME"
+                    continue
+                
+                fi
 
                 echo "Файл: $FILENAME"
                 echo "Timestamp: $TIMESTAMP"
@@ -58,7 +85,13 @@ if ((USAGE > THRESHOLD)); then
             for ((i = 0; i < COUNT - 1; i++)); do
 
                 FILE="${LOG_FILES[i]#*:}"
-                FILE_SIZE=$(du -B1 "$FILE" | awk '{print $1}')
+
+                if ! DU_OUTPUT=$(du -B1 "$FILE"); then
+                    echo "Ошибка: не удалось определить размер файла $FILE"
+                    exit 1
+                fi
+
+                FILE_SIZE=$(printf '%s\n' "$DU_OUTPUT" | awk '{print $1}')
 
                 SELECTED_FILES+=("$FILE")
                 BYTES_TO_FREE=$(( BYTES_TO_FREE - FILE_SIZE ))
